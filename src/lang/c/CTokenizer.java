@@ -75,10 +75,14 @@ public class CTokenizer extends Tokenizer<CToken, CParseContext> {
 				} else if (ch == (char) -1) {	// EOF
 					startCol = colNo - 1;
 					state = 1;
-				} else if (ch >= '0' && ch <= '9') { // 数字
+				} else if (ch >= '1' && ch <= '9') { // 1~9
 					startCol = colNo - 1;
 					text.append(ch);
 					state = 3;
+				} else if (ch == '0') { // 0
+					startCol = colNo - 1;
+					text.append(ch);
+					state = 10;
 				} else if (ch == '+') {  // プラス
 					startCol = colNo - 1;
 					text.append(ch);
@@ -91,6 +95,10 @@ public class CTokenizer extends Tokenizer<CToken, CParseContext> {
 					startCol = colNo - 1;
 					text.append(ch);
 					state = 5;
+				} else if (ch == '&') { // &
+					startCol = colNo - 1;
+					text.append(ch);
+					state = 9;
 				} else {			// ヘンな文字を読んだ
 					startCol = colNo - 1;
 					text.append(ch);
@@ -163,7 +171,21 @@ public class CTokenizer extends Tokenizer<CToken, CParseContext> {
 				} else {
 					text.append(ch);
 				}
-				
+				break;
+			case 9: // アドレス
+				ch = readChar();
+				if (Character.isDigit(ch)) {
+					text.append(ch);
+				} else {
+					// 数の終わり
+					backChar(ch);	// 数を表さない文字は戻す（読まなかったことにする）
+					tk = new CToken(CToken.TK_ADDRESS, lineNo, startCol, text.toString());
+					accept = true;
+				}
+				break;
+			case 10: // 10進数 8進数 16進数
+				ch = readChar();
+				if (ch == )
 			}
 		}
 		return tk;
