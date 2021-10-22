@@ -118,10 +118,15 @@ public class CTokenizer extends Tokenizer<CToken, CParseContext> {
 				if (Character.isDigit(ch)) {
 					text.append(ch);
 				} else {
-					// 数の終わり
-					backChar(ch);	// 数を表さない文字は戻す（読まなかったことにする）
-					tk = new CToken(CToken.TK_NUM, lineNo, startCol, text.toString());
-					accept = true;
+					if (Integer.decode(text.toString()).intValue() > 32767) { // オーバーフロー
+						backChar(ch);
+						state = 2;
+					} else {
+						// 数の終わり
+						backChar(ch);	// 数を表さない文字は戻す（読まなかったことにする）
+						tk = new CToken(CToken.TK_NUM, lineNo, startCol, text.toString());
+						accept = true;
+					}
 				}
 				break;
 			case 4:					// +を読んだ
@@ -166,8 +171,7 @@ public class CTokenizer extends Tokenizer<CToken, CParseContext> {
 						backChar(ch);
 					}
 				} else if (ch == (char) - 1) {
-					tk = new CToken(CToken.TK_ILL, lineNo, startCol, text.toString());
-					accept = true;
+					state = 2;
 				} else {
 					text.append(ch);
 				}
@@ -177,15 +181,91 @@ public class CTokenizer extends Tokenizer<CToken, CParseContext> {
 				if (Character.isDigit(ch)) {
 					text.append(ch);
 				} else {
-					// 数の終わり
-					backChar(ch);	// 数を表さない文字は戻す（読まなかったことにする）
+					// アドレスの終わり
+					backChar(ch);	// アドレスを表さない文字は戻す（読まなかったことにする）
 					tk = new CToken(CToken.TK_ADDRESS, lineNo, startCol, text.toString());
 					accept = true;
 				}
 				break;
 			case 10: // 10進数 8進数 16進数
 				ch = readChar();
-				if (ch == )
+				
+				if (ch >= '0' && ch <= '7') { // 8進数(正常)
+					text.append(ch);
+					state = 13;
+				} else if (ch == '8' || ch == '9') { // 8進数(異常)
+					text.append(ch);
+					state = 14;
+				} else if (ch == 'x' || ch == 'X') { // 16進数(正常)
+					text.append(ch);
+					state = 11;
+				} else { // 10進数(0)
+					// 数の終わり
+					backChar(ch);	// 数を表さない文字は戻す（読まなかったことにする）
+					tk = new CToken(CToken.TK_NUM, lineNo, startCol, text.toString());
+					accept = true;
+				}
+				break;
+			case 13: // 8進数(正常)
+				ch = readChar();
+				if (ch >= '0' && ch <= '7') { // 8進数(正常)
+					text.append(ch);
+					state = 13;
+				} else if (ch == '8' || ch == '9') { // 8進数(異常)
+					text.append(ch);
+					state = 14;
+				} else { // 8進数の終了
+					// 数値がオーバーフロー
+					if (text.length() >= 8 || (text.length() == 7 && text.charAt(1) != '0' && text.charAt(1) != '1')) {
+						backChar(ch);	// 数を表さない文字は戻す（読まなかったことにする）
+						state = 2;
+					} else {
+						// 数の終わり
+						backChar(ch);	// 数を表さない文字は戻す（読まなかったことにする）
+						tk = new CToken(CToken.TK_NUM, lineNo, startCol, text.toString());
+						accept = true;
+					}
+				}
+				break;
+			case 14: // 8進数(異常)
+				ch = readChar();
+				if (Character.isDigit(ch)) {
+					text.append(ch);
+				} else {
+					backChar(ch);	// 数を表さない文字は戻す（読まなかったことにする）
+					state = 2;
+				}
+				break;
+			case 11: // 16進数かも
+				ch = readChar();
+				
+				if (Character.isDigit(ch) ||
+						(ch >= 'a' && ch <= 'f') ||
+						(ch >= 'A' && ch <= 'F')) {
+					text.append(ch);
+					state = 12;
+				} else {
+					backChar(ch);
+					state = 2;
+				}
+				break;
+			case 12: // 16進数(正常)
+				ch = readChar();
+				if (Character.isDigit(ch) ||
+						(ch >= 'a' && ch <= 'f') ||
+						(ch >= 'A' && ch <= 'F')) {
+					text.append(ch);
+				} else {
+					if (text.length() >= 7) {
+						backChar(ch);	// 数を表さない文字は戻す（読まなかったことにする）
+						state = 2;
+					} else {
+						backChar(ch);	// 数を表さない文字は戻す（読まなかったことにする）
+						tk = new CToken(CToken.TK_NUM, lineNo, startCol, text.toString());
+						accept = true;
+					}
+				}
+				break;
 			}
 		}
 		return tk;
