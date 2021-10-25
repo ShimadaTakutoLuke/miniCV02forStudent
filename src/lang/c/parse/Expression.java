@@ -10,7 +10,7 @@ import lang.c.CTokenizer;
 import lang.c.CType;
 
 public class Expression extends CParseRule {
-	// expression ::= term { expressionAdd }
+	// expression ::= term { expressionAdd | expressionSub}
 	private CParseRule expression;
 
 	public Expression(CParseContext pcx) {
