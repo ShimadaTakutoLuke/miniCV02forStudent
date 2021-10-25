@@ -177,15 +177,8 @@ public class CTokenizer extends Tokenizer<CToken, CParseContext> {
 				}
 				break;
 			case 9: // アドレス
-				ch = readChar();
-				if (Character.isDigit(ch)) {
-					text.append(ch);
-				} else {
-					// アドレスの終わり
-					backChar(ch);	// アドレスを表さない文字は戻す（読まなかったことにする）
-					tk = new CToken(CToken.TK_ADDRESS, lineNo, startCol, text.toString());
-					accept = true;
-				}
+				tk = new CToken(CToken.TK_ADDRESS, lineNo, startCol, "&");
+				accept = true;
 				break;
 			case 10: // 10進数 8進数 16進数
 				ch = readChar();
