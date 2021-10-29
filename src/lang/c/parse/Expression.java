@@ -25,6 +25,7 @@ public class Expression extends CParseRule {
 		term.parse(pcx);
 		CTokenizer ct = pcx.getTokenizer();
 		CToken tk = ct.getCurrentToken(pcx);
+		
 		while (ExpressionAdd.isFirst(tk) || ExpressionSub.isFirst(tk)) {
 			if (ExpressionAdd.isFirst(tk)) {
 				list = new ExpressionAdd(pcx, term);
@@ -70,6 +71,7 @@ class ExpressionAdd extends CParseRule {
 		op = ct.getCurrentToken(pcx);
 		// +の次の字句を読む
 		CToken tk = ct.getNextToken(pcx);
+		
 		if (Term.isFirst(tk)) {
 			right = new Term(pcx);
 			right.parse(pcx);
@@ -81,14 +83,16 @@ class ExpressionAdd extends CParseRule {
 	public void semanticCheck(CParseContext pcx) throws FatalErrorException {
 		// 足し算の型計算規則
 		final int s[][] = {
-		//		T_err			T_int
-			{	CType.T_err,	CType.T_err },	// T_err
-			{	CType.T_err,	CType.T_int },	// T_int
+		//		T_err			T_int			T_pint
+			{	CType.T_err,	CType.T_err  , CType.T_err },	// T_err
+			{	CType.T_err,	CType.T_int  , CType.T_pint},	// T_int
+			{	CType.T_err,	CType.T_pint , CType.T_err },	// T_pint
 		};
 		if (left != null && right != null) {
 			left.semanticCheck(pcx);
 			right.semanticCheck(pcx);
 			int lt = left.getCType().getType();		// +の左辺の型
+			//System.out.print("debug : rt = " + right.getCType() + ", lt = " + left.getCType() + "\n");
 			int rt = right.getCType().getType();	// +の右辺の型
 			int nt = s[lt][rt];						// 規則による型計算
 			if (nt == CType.T_err) {
@@ -113,7 +117,7 @@ class ExpressionAdd extends CParseRule {
 }
 
 class ExpressionSub extends CParseRule {
-	// expressionAdd ::= '+' term
+	// expressionSub ::= '+' term
 	private CToken op;
 	private CParseRule left, right;
 	public ExpressionSub(CParseContext pcx, CParseRule left) {
@@ -137,12 +141,14 @@ class ExpressionSub extends CParseRule {
 	}
 
 	public void semanticCheck(CParseContext pcx) throws FatalErrorException {
+		
 		// 足し算の型計算規則
-		final int s[][] = {
-		//		T_err			T_int
-			{	CType.T_err,	CType.T_err },	// T_err
-			{	CType.T_err,	CType.T_int },	// T_int
-		};
+				final int s[][] = {
+				//		T_err			T_int			T_pint
+					{	CType.T_err,	CType.T_err  , CType.T_err },	// T_err
+					{	CType.T_err,	CType.T_int  , CType.T_pint},	// T_int
+					{	CType.T_err,	CType.T_pint , CType.T_err },	// T_pint
+				};
 		if (left != null && right != null) {
 			left.semanticCheck(pcx);
 			right.semanticCheck(pcx);

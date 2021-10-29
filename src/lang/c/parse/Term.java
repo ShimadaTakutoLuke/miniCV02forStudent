@@ -2,8 +2,10 @@ package lang.c.parse;
 
 import java.io.PrintStream;
 
-import lang.*;
-import lang.c.*;
+import lang.FatalErrorException;
+import lang.c.CParseContext;
+import lang.c.CParseRule;
+import lang.c.CToken;
 
 public class Term extends CParseRule {
 	// term ::= factor
